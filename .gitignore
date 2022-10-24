@@ -1,0 +1,16 @@
+build*
+model*
+output/
+/dcfwd3d
+
+*.prm
+*.cfg
+*.log
+*.vtk
+*.vtu
+*.dat
+.DS_Store
+
+.vscode/
+.devcontainer/
+.cache/
