@@ -21,4 +21,3 @@
 *.fdb_latexmk
 /*.pdf
 .vscode/
-*.busy
