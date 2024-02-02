@@ -31,42 +31,29 @@
 \maketitle
 
 \begin{abstract}
-In recent years, the Multigrid Method and Adaptive Finite Element Method have
-been actively applied to enhance the precision of numerical solutions in
-three-dimensional direct current resistivity forward and inversion problems. The
-hanging nodes caused by adaptive refinement, has enhance the computational
-complexity of these simulations. To boost the efficiency of numerical
-simulation, algebraic multigrid methods have been used as preconditioner in
-Krylov space solvers in recent years. However, Algebraic Multigrid struggles
-with poor convergence when handling high-order basis functions, leading to
-significantly increased computational time.
-
-Our study introduces a Conjugate Gradient method using geometric multigrid as a
-preconditioner combine with the adaptive finite element method for
-three-dimensional direct current resistivity forward simulations. This method
-aims to enhance both solution accuracy and efficiency while mitigating
-computational expenses. By leveraging a goal-oriented adaptive finite element
-method based on posterior error estimators, our approach selectively refines
-grids exhibiting substantial errors during the adaptive process.
-
-The geometric multigrid method, based on geometrically partitioned grid
-hierarchies, the smoothing at each level involves the current level and finer
-levels only. When applied to adaptive grids, the degrees of freedom at each
-level in the multigrid are low, lowering the data transfer costs between
-adjacent levels, thereby enhancing the solution efficiency.
-
-Our algorithm's effectiveness and parallel performance are confirmed through the
-solution of the half-space model using both global and adaptive refinement
-strategies. The outcomes confirmed our algorithm's ability to achieve more
-accurate numerical solutions at significantly lower computational costs. Various
-models, encompassing layered structures, complex terrain models constructed by
-octree-based grid refinement methods, and unstructured grid models, are
-subjected to simulations using geometric multigrid and Algebraic Multigrid
-methods employing high-order basis functions. Schlumberger soundings to generate
-pseudosection, validated geometric multigrid's capacity to deliver accurate
-numerical solutions in solving complex models and comparative analysis of
-convergence rates underscores the supremacy of geometric multigrid in resolving
-three-dimensional direct current problems.
+When using the finite element method for three-dimensional DC resistivity forward 
+modeling, the presence of a large sparse matrix and hanging nodes, making the 
+solving process of the linear system more challenging. Traditional algebraic 
+multigrid methods suffer from low solution efficiency and poor convergence when 
+dealing with high-order basis functions. To enhance the efficiency of three-
+dimensional DC resistivity forward modeling, this paper proposes an algorithm that 
+combines geometric multigrid with adaptive finite element methods. By leveraging a 
+goal-oriented adaptive finite element method based on posterior error estimators, 
+our approach selectively refines grids exhibiting substantial errors during the 
+adaptive process. We then employ a V-cycle geometric multigrid on the obtained 
+adaptive grid, addressing the hanging node issue using local smoothing.
+Our algorithm's effectiveness and parallel performance are 
+confirmed through the solution of the half-space model using both global and 
+adaptive refinement strategies. To demonstrate the effectiveness of our algorithm in various scenarios, 
+we conducted forward simulations using geometric multigrid and algebraic multigrid 
+methods for three scenarios under different basis functions. Three scenarios, 
+including layered structures, complex terrain models constructed by octree-based 
+grid refinement methods, and unstructured grid models. For complex terrain models, 
+we also applied Schlumberger soundings to generate pseudosection, validated 
+geometric multigrid's capacity to provide accurate numerical solutions in solving 
+complex models. Numerical results demonstrate that the proposed algorithm can 
+achieve more accurate numerical solutions with a significantly reduced 
+computational cost. Moreover, the results also indicates that GMG outperforms traditional AMG methods in terms of solution efficiency and stability.
 
 % Additionally, simulations employing geometric multigrid and algebraic
 % multigrid on grids with distinct stretch factor demonstrate that geometric
@@ -89,7 +76,7 @@ element method, Three-dimensional forward modeling
 \end{keywords}
 
 \section{Introduction}
-The direct current (DC) resistivity  method is a widely recognized geophysical
+The direct current (DC) resistivity method is a widely recognized geophysical
 exploration technique used to effectively detect conductive structures in the
 shallow subsurface. It has extensive applications in various fields, including
 mining exploration, civil engineering, hydrology, and environmental surveys.
@@ -137,7 +124,7 @@ between coarse grids and grid levels. Compared to AMG, GMG requires less memory
 and offers higher computational efficiency. GMG can be used both as a solver and
 as a preconditioner for Krylov subspace \citep{Lu2014,HerreroPrez2023,Ilin2023}
 methods to solve linear equation systems. Currently, multiple-grid algorithms
-are actively studied in geophysics,  but there has been limited research on GMG
+are actively studied in geophysics, but there has been limited research on GMG
 specifically for adaptive grids.
 
 In this paper, we combined the adaptive finite element method  with GMG for
@@ -406,63 +393,63 @@ provide a brief overview of the operational details of this method.
 We define the self-adjoint symmetric bilinear form $B(, )$ as follows:
 \begin{equation}
   \label{eq:testfundual0}
-   B(\mathbf{E}, \mathbf{V}) = \int_{\Omega} \nabla \mathbf{V} \cdot (\sigma \nabla \mathbf{E}) {d}\Omega + \int_{ \Gamma_\infty}\mathbf{V}\frac{ {cos}(\mathbf{r}, \mathbf{n})}{r} {\mathbf{E}} {d}\Gamma,
+   B(u, V) = \int_{\Omega} \nabla V \cdot (\sigma \nabla u) {d}\Omega + \int_{ \Gamma_\infty}{V}\frac{ {cos}(\mathbf{r}, \mathbf{n})}{r} {u} {d}\Gamma,
 \end{equation}
-where $\mathbf{V}$ is a vector test function.
+where $v$ is a vector test function.
 
-We define the linear function of the potential as $L(\mathbf{M})$, where
-$\mathbf{M}$ is the accurate solution of the electric field and belongs to
+We define the linear function of the potential as $L(M)$, where
+$M$ is the accurate solution of the electric field and belongs to
 $\Omega$  \citep{Ren2013}. The adaptive algorithm aims to minimize errors within
 the specified area of interest. The  primary weak form of its corresponding
 primal problem is derived as follows:
 \begin{equation}
   \label{eq:testfundual11}
-   B(\mathbf{E}, \mathbf{V}) = L(\mathbf{V}).
+   B(u, V) = L(V).
 \end{equation}
 
 Then the primary weak form of the dual problem can be defined, which seeks to
-find $\mathbf{U} \in \Omega$, such that
+find $W \in \Omega$, such that
 \begin{equation}
   \label{eq:dualweak}
-   B(\mathbf{U}, \mathbf{V}) = L(\mathbf{V}).
+   B(W, V) = L({V}).
 \end{equation}
 
-In the dual weak form of equation \ref{eq:dualweak}, $L(\mathbf{V})$ is a linear
+In the dual weak form of equation \ref{eq:dualweak}, $L({V})$ is a linear
 functional acting on an arbitrary function $\mathbf{V}$ within the domain
-$\Omega$. The solution $\mathbf{U}$ to the dual problem is commonly known as the
-'influence function' \citep{Oden2001}. Additionally, we define the numerical
-error of the potential as $\mathbf{e} = \mathbf{M} -\mathbf{M}_h$, where
-$\mathbf{M}_h$ signifies the numerical solution of primal problem. With these
+$\Omega$. The solution ${W}$ to the dual problem is commonly known as the
+influence function \citep{Oden2001}. Additionally, we define the numerical
+error of the potential as ${m} = {M} -{M}_h$, where
+${M}_h$ signifies the numerical solution of primal problem. With these
 definitions, we obtain the following formula:
 \begin{equation}
   \label{eq:testfundual1}
-   L(\mathbf{e})=B(\mathbf{U}, \mathbf{e}) = B(\mathbf{U}_h, \mathbf{e})
-     + B(\mathbf{u}_e, \mathbf{e})=B(\mathbf{u}_e, \mathbf{e}).
+   L({m})=B({W}, {m}) = B({W}_h, {m})
+     + B({u}_e, {m})=B({w}_e, {m}).
 \end{equation}
 
-The error value of $\mathbf{U}$ is denoted as $\mathbf{u}_e$, and $\mathbf{U}_h$
-represents the finite element approximation of $\mathbf{U}$. Due to the Galerkin
-orthogonality property in \citep{Brenner2008}, we have $ B(\mathbf{U}_h,
-\mathbf{e}) = 0$. To explicitly express $B(\mathbf{u}_e, \mathbf{e})$, we apply
+The ${w}_e$ is thr error value of ${W}$, and ${W}_h$
+represents the finite element approximation of ${W}$. Due to the Galerkin
+orthogonality property in \citep{Brenner2008}, we have $ B({W}_h,
+{m}) = 0$. To explicitly express $B({w}_e, {m})$, we apply
 the Cauchy-Schwartz \citep{Oden2001,Brenner2008} inequality on equation
 \ref{eq:testfun1}:
 \begin{equation}
   \label{eq:testfundual2}
-   \left| L(\mathbf{e}) \right| = \left| B(\mathbf{e}, \mathbf{u}_e) \right|
-     \leq \sum_{n=1}^{N} \left| B_n(\mathbf{e}, \mathbf{u}_e) \right|
-     \leq \sum_{n=1}^{N} ||\mathbf{e}||_{e, n} \ ||\mathbf{u}_e||_{e, n}
-     \approx \sum_{n=1}^{N} C_n \ ||\mathbf{e}||_{L^2, n} \ ||\mathbf{u}_e||_{L^2, n}.
+   \left| L({m}) \right| = \left| B({e}, {w}_e) \right|
+     \leq \sum_{n=1}^{N} \left| B_n({e}, {w}_e) \right|
+     \leq \sum_{n=1}^{N} ||{e}||_{e, n} \ ||{w}_e||_{e, n}
+     \approx \sum_{n=1}^{N} C_n \ ||{e}||_{L^2, n} \ ||{w}_e||_{L^2, n}.
 \end{equation}
 
-In the given equation, $C_n$ is a positive constant influenced by cell size,
+In equation \ref{eq:testfundual2}, $C_n$ is a positive constant influenced by cell size,
 impedance, and conductivity. The norm $||.||_e$ represents the energy norm of
 the bilinear form$ B(,)$, defined as $||.||_e = \sqrt{|B(,)|}$. The L2 norm
 \citep{Zdunek2005} serves as a substitute for the energy norm. This substitution
 alleviates computational challenges associated with assessing errors in the
 energy norm while preserving the efficiency of error estimation. We redefine the
 following parameters: $\eta_d = ||e||_{L^2,n}$ as the error indicator for
-$\mathbf{M}$, $\eta_d = ||\mathbf{u}||_{L^2,n}$ as the error indicator for
-$\mathbf{U}$. Then, the error estimator for $L(\mathbf{e})$ is given by:
+${M}$, $\eta_d = ||{w}||_{L^2,n}$ as the error indicator for
+${W}$. Then, the error estimator for $L({m})$ is given by:
 \begin{equation}
   \label{eq:testfundual3}
    \eta = \sum_{n=1}^{N} \eta_p \cdot \eta_d.
@@ -800,14 +787,14 @@ level. The local smoothing procedure within a region is defined as follows:
 \begin{equation}
     \tilde{\mathbf{S}}^{(i)}_l =
     \begin{pmatrix}
-      \mathbf{S}^{(i)}_{l;s} & 0 \\ 0 & \mathbf{I}
+      \mathbf{S}^{(i)}_{l,s} & 0 \\ 0 & \mathbf{I}
     \end{pmatrix},
     \mathbf{S}^{(i)}_l =
     \begin{pmatrix}
-      \mathbf{S}^{(i)}_{l;s} & 0 \\ 0 & 0
+      \mathbf{S}^{(i)}_{l,s} & 0 \\ 0 & 0
     \end{pmatrix},
 \end{equation}
-where $\mathbf{S}^{(i)}_{l;s}$ denotes the restriction of the smoother. In our
+where $\mathbf{S}^{(i)}_{l,s}$ denotes the restriction of the smoother. In our
 study, the smoother is a block Jacobi method. The operator
 $\tilde{\mathbf{S}}^{(i)}_l$ refers to the actually implemented smoothing
 operator for the matrix $\tilde{\mathbf{A}}^{(i)}_l$. Integrate the definition
@@ -907,7 +894,7 @@ refine fraction of adaptive refinement to 0.1.
 In this section, we established a half-space model to verify the convergence of
 the adaptive algorithm. We also discussed the influence of the order of basis
 functions on the algorithm. The background of this model is a half-space with a
-resistivity of $100 \Omega m$. The dimensions of the half-space are 1000\,m ×
+resistivity of $100\,\Omega m$. The dimensions of the half-space are 1000\,m ×
 1000\,m × 1000\,m, comprising 512 elements. We supplied power at the position
 (0\,m, 0\,m, 0\,m) with a current of 1A. Eleven receivers are positioned along
 the x-axis at the surface, located at distances of 1\,m, 2\,m, 4\,m, 6\,m, 8\,m,
